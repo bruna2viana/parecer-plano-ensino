@@ -544,12 +544,12 @@ function analisarPlanoLocal(texto){
   const set = (id, s, o) => { itens[id] = {id, s, o: o||''}; };
 
   // --- dados gerais ---
-  const centro = extractField(T, /Centro:?\s*([^\n]+)/i);
+  const centro = extractField(T, /Centro:?\s*([^\n]+)/i) || extractField(T, /Curso:?\s*([^\n]+)/i);
   const disciplinaLinha = extractField(T, /Disciplina:?\s*([^\n]+)/i) || '';
-  const codigoMatch = disciplinaLinha.match(/([A-Z]{2,6}\d{3})/) || T.match(/([A-Z]{2,6}\d{3})/);
-  const codigo = codigoMatch ? codigoMatch[1].toUpperCase() : null;
+  const codigoMatch = disciplinaLinha.match(/([A-Z]{2,6})\s?(\d{3})/) || T.match(/([A-Z]{2,6})\s?(\d{3})/);
+  const codigo = codigoMatch ? (codigoMatch[1] + codigoMatch[2]).toUpperCase() : null;
   const disciplinaNome = disciplinaLinha
-    .replace(codigo||'', '')
+    .replace(codigoMatch ? codigoMatch[0] : '', '')
     .split(/\bCr[eé]ditos\b/i)[0]
     .replace(/^[:\s-]+/, '')
     .trim() || null;
@@ -759,16 +759,16 @@ function analisarPlanoLocal(texto){
   const periodoMatch = T.match(/Per[ií]odo de realiza[cç][aã]o:?\s*(\d{2})\/(\d{2})\/(\d{2,4})\s*a\s*(\d{2})\/(\d{2})\/(\d{2,4})/i);
   set(31, periodoMatch ? 'SIM' : 'NAO');
 
-  const datasUnidades = [...T.matchAll(/Unidade\s*\d+:[^\n]*\n+\s*(\d{2})\/(\d{2})\/(\d{2,4})\s*(?:a|à|-|–|—)?\s*(\d{2})\/(\d{2})\/(\d{2,4})/gi)];
+  const datasUnidades = [...T.matchAll(/Unidade\s*\d+:[^\n]*?\s*(\d{2})\/(\d{2})\/(\d{2,4})\s*(?:a|à|-|–|—)?\s*(\d{2})\/(\d{2})\/(\d{2,4})/gi)];
   set(32, datasUnidades.length > 0 ? 'SIM' : 'PARCIAL', datasUnidades.length ? '' : 'Não foi possível localizar datas de início/término por unidade no formato esperado — conferir manualmente.');
 
-  const datasAvaliacoes = [...T.matchAll(/Avalia[cç][aã]o\s*\d+[^\n]{0,25}?N[12][^\n]*\n+\s*(\d{2})\/(\d{2})\/(\d{2,4})/gi)];
+  const datasAvaliacoes = [...T.matchAll(/(?:Avalia[cç][aã]o|Atividade)\s*\d+[^\n]{0,25}?N[12][\s\S]{0,80}?(\d{2})\/(\d{2})\/(\d{2,4})/gi)];
   set(33, datasAvaliacoes.length > 0 ? 'SIM' : 'PARCIAL', datasAvaliacoes.length ? '' : 'Não foi possível localizar datas por avaliação no formato esperado — conferir manualmente.');
 
   const provaFinalDataMatch = T.match(/(?:Realiza[cç][aã]o da Prova Final|Exame Final)[^\n]*\n?\s*(\d{2})\/(\d{2})\/(\d{2,4})/i);
   set(34, provaFinalDataMatch ? 'SIM' : 'NAO');
 
-  const temCronogramaDetalhado = /CRONOGRAMA DETALHADO/i.test(T) || /CRONOGRAMA DE ATIVIDADES/i.test(T);
+  const temCronogramaDetalhado = /CRONOGRAMA DETALHADO/i.test(T) || /CRONOGRAMA[^\n]{0,25}ATIVIDADES/i.test(T);
   set(35, temCronogramaDetalhado ? 'SIM' : 'NAO');
 
   // --- item 0: modelo do plano ---
