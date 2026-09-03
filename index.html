@@ -565,7 +565,8 @@ function analisarPlanoLocal(texto){
     || extractField(T, /CH de Acex:?\s*([^\n]+)/i)
     || '';
   const chAcexTexto = chAcexRaw.replace(/\s+/g,' ').trim();
-  const semestreTexto = extractField(T, /Semestre Letivo\/?Ano:?\s*([^\n]+)/i);
+  const semestreTexto = extractField(T, /Semestre Letivo\/?Ano:?\s*([^\n]+)/i)
+    || extractField(T, /Per[ií]odo:?\s*([^\n]+)/i);
   const diasHorarios = extractField(T, /Dias\/?hor[aá]rios de aula:?\s*([^\n]+)/i);
   const professor = extractField(T, /Professor\(?a\)?:?\s*([^\n]+)/i);
 
@@ -618,7 +619,7 @@ function analisarPlanoLocal(texto){
   set(11, professor ? 'SIM' : 'NAO');
 
   // --- ementa / objetivos ---
-  const ementaTxt = sectionText(T, /I-?\s*Ementa:?/i, /II-?\s*Objetivos/i);
+  const ementaTxt = sectionText(T, /I\s*[-–—.:]?\s*Ementa:?/i, /II\s*[-–—.:]?\s*Objetivos/i);
   if (ementaTxt.trim().length <= 20){
     set(12, 'NAO', 'Nenhum texto de ementa foi encontrado no plano.');
   } else {
@@ -639,7 +640,7 @@ function analisarPlanoLocal(texto){
 
   const objGeraisTxt = sectionText(T, /Objetivos?\s*Gerais?/i, /Objetivos?\s*Espec[ií]ficos?/i);
   set(13, objGeraisTxt.trim().length > 15 ? 'SIM' : 'NAO');
-  const objEspTxt = sectionText(T, /Objetivos?\s*Espec[ií]ficos?/i, /III\s*-?\s*Conte[uú]dos/i);
+  const objEspTxt = sectionText(T, /Objetivos?\s*Espec[ií]ficos?/i, /III\s*[-–—.:]?\s*Conte[uú]dos/i);
   set(14, objEspTxt.trim().length > 15 ? 'SIM' : 'NAO');
 
   // --- conteúdos / unidades ---
@@ -658,7 +659,7 @@ function analisarPlanoLocal(texto){
       chSuficiente ? '' : `Encontradas ${nUnidades} unidade(s) e ${chValores} valor(es) de CH na seção de conteúdos — conferir se cada unidade tem sua carga horária.`);
 
   // --- metodologia ---
-  const metodologiaTxt = sectionText(T, /IV\s*-?\s*Metodologia/i, /V\s*-?\s*Recursos/i);
+  const metodologiaTxt = sectionText(T, /IV\s*[-–—.:]?\s*Metodologia/i, /V\s*[-–—.:]?\s*Recursos/i);
   set(17, metodologiaTxt.trim().length > 30 ? 'SIM' : 'NAO');
 
   // Heurística por palavras-chave: cruza os créditos T-P-E (Teórico-Prático-Estágio, ordem confirmada no
@@ -708,7 +709,7 @@ function analisarPlanoLocal(texto){
   }
 
   // --- recursos didáticos ---
-  const recursosTxt = sectionText(T, /V\s*-?\s*Recursos\s*Did[aá]ticos/i, /VI\s*-?\s*Avalia[cç][aã]o/i);
+  const recursosTxt = sectionText(T, /V\s*[-–—.:]?\s*Recursos\s*Did[aá]ticos/i, /VI\s*[-–—.:]?\s*Avalia[cç][aã]o/i);
   set(20, recursosTxt.trim().length > 15 ? 'SIM' : 'NAO');
 
   // --- avaliação ---
@@ -749,7 +750,7 @@ function analisarPlanoLocal(texto){
   set(27, provaFinalTxt ? 'SIM' : 'NAO');
 
   // --- bibliografia ---
-  const bibTxt = sectionText(T, /VII\s*-?\s*Bibliografia/i, /VIII\s*-?\s*Cronograma/i);
+  const bibTxt = sectionText(T, /VII\s*[-–—.:]?\s*Bibliografia/i, /VIII\s*[-–—.:]?\s*Cronograma/i);
   set(28, /Bibliografia\s*B[aá]sica/i.test(bibTxt) ? 'SIM' : 'NAO');
   set(29, /Bibliografia\s*Complementar/i.test(bibTxt) ? 'SIM' : 'NAO');
   set(30, /Bibliografia\s*Sugerida/i.test(bibTxt) ? 'SIM' : 'NAO');
@@ -767,7 +768,7 @@ function analisarPlanoLocal(texto){
   const provaFinalDataMatch = T.match(/(?:Realiza[cç][aã]o da Prova Final|Exame Final)[^\n]*\n?\s*(\d{2})\/(\d{2})\/(\d{2,4})/i);
   set(34, provaFinalDataMatch ? 'SIM' : 'NAO');
 
-  const temCronogramaDetalhado = /CRONOGRAMA DETALHADO/i.test(T);
+  const temCronogramaDetalhado = /CRONOGRAMA DETALHADO/i.test(T) || /CRONOGRAMA DE ATIVIDADES/i.test(T);
   set(35, temCronogramaDetalhado ? 'SIM' : 'NAO');
 
   // --- item 0: modelo do plano ---
